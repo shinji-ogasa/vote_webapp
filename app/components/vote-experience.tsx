@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
 type VoteChoice = "good" | "bad";
 
@@ -17,6 +18,7 @@ type VoteResults = {
 
 type VoteExperienceProps = {
   targetSlug: string;
+  view: "vote" | "results";
   debugResults?: boolean;
 };
 
@@ -48,7 +50,8 @@ const GENDERS = [
   ["prefer_not_to_say", "回答しない"],
 ] as const;
 
-export function VoteExperience({ targetSlug, debugResults = false }: VoteExperienceProps) {
+export function VoteExperience({ targetSlug, view, debugResults = false }: VoteExperienceProps) {
+  const router = useRouter();
   const [results, setResults] = useState<VoteResults | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [isVoting, setIsVoting] = useState(false);
@@ -60,6 +63,8 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
   const [isSubmittingSurvey, setIsSubmittingSurvey] = useState(false);
   const [surveyMessage, setSurveyMessage] = useState("");
   const [notice, setNotice] = useState("");
+  const votePath = `/vote/${encodeURIComponent(targetSlug)}`;
+  const resultsPath = `${votePath}/results`;
 
   const loadResults = useCallback(async () => {
     setStatus("loading");
@@ -72,13 +77,18 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
       setResults(data);
       setHasVoted(Boolean(data.hasVoted));
       setSurveySubmitted(Boolean(data.surveySubmitted));
-      setNotice(data.hasVoted ? "この端末からは投票済みです。" : "");
+      setNotice(data.hasVoted && view === "results" ? "この端末からは投票済みです。" : "");
       setStatus("ready");
+      if (data.hasVoted && view === "vote") {
+        router.replace(resultsPath);
+      } else if (!data.hasVoted && view === "results") {
+        router.replace(votePath);
+      }
     } catch {
       setStatus("error");
       setNotice("投票サーバーに接続できません。環境変数とSupabaseの設定を確認してください。");
     }
-  }, [targetSlug]);
+  }, [resultsPath, router, targetSlug, view, votePath]);
 
   useEffect(() => {
     if (debugResults) return;
@@ -89,7 +99,7 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
   }, [debugResults, loadResults]);
 
   async function submitVote(choice: VoteChoice) {
-    if (debugResults || status !== "ready" || isVoting || hasVoted) return;
+    if (view !== "vote" || debugResults || status !== "ready" || isVoting || hasVoted) return;
     setIsVoting(true);
     setNotice("");
     try {
@@ -100,10 +110,7 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
       });
       const data = (await response.json()) as VoteResults & { error?: string };
       if (!response.ok) throw new Error(data.error ?? "投票を送信できませんでした。");
-      setResults(data);
-      setHasVoted(true);
-      setSurveySubmitted(Boolean(data.surveySubmitted));
-      setNotice(data.alreadyVoted ? "この端末では投票済みです。結果が表示されています。" : "投票ありがとう。みんなの結果はこちら。");
+      router.push(resultsPath);
     } catch {
       setNotice("投票を送信できませんでした。もう一度試してください。");
     } finally {
@@ -145,23 +152,26 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
   const displayNotice = debugResults
     ? "デバッグ用のサンプル表示です。投票・アンケートは送信されません。"
     : notice;
+  const isResultsView = view === "results";
   const isVoteDisabled = debugResults || status !== "ready" || isVoting || hasVoted;
 
   return (
     <section className="vote-shell content-width">
       <div className="vote-intro">
         <p className="eyebrow"><span className="eyebrow-line" /> QUICK OPINION / 001</p>
-        <h1>この人の顔、<em>どう思う？</em></h1>
-        <p className="vote-subtitle">直感でひとつ。理由はいりません。</p>
+        {isResultsView ? <h1>みんなの<em>結果</em></h1> : <h1>この人の顔、<em>どう思う？</em></h1>}
+        <p className="vote-subtitle">
+          {isResultsView ? "投票ありがとう。みんなの判定はこちら。" : "直感でひとつ。理由はいりません。"}
+        </p>
       </div>
 
       <div className="vote-board">
         <div className="board-topline">
           <span>FACE CHECK</span>
-          <span className="live-label">RESULT / ALL VOTES</span>
+          <span className="live-label">{isResultsView ? "RESULT / ALL VOTES" : "YOUR VOTE"}</span>
         </div>
 
-        <div className="choice-grid" aria-label="投票する">
+        {!isResultsView && <div className="choice-grid" aria-label="投票する">
           <button
             className="choice-button choice-good"
             type="button"
@@ -188,10 +198,22 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
             </span>
             <span className="choice-arrow" aria-hidden="true">↗</span>
           </button>
-        </div>
+        </div>}
 
-        {displayStatus === "loading" && (
-          <div className="result-panel result-loading" role="status">投票ページを準備中…</div>
+        {!isResultsView && (isVoting || notice) && (
+          <p className="notice" role="status">
+            {isVoting ? "投票を送信しています…" : notice}
+          </p>
+        )}
+
+        {displayStatus === "loading" && (isResultsView || !results) && (
+          <div className="result-panel result-loading" role="status">
+            {isResultsView ? "結果を読み込んでいます…" : "投票ページを準備中…"}
+          </div>
+        )}
+
+        {displayStatus === "ready" && isResultsView && !displayHasVoted && (
+          <div className="result-panel result-loading" role="status">投票ページへ戻ります…</div>
         )}
 
         {displayStatus === "error" && (
@@ -202,14 +224,7 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
           </div>
         )}
 
-        {displayStatus === "ready" && displayResults && !displayHasVoted && (
-          <div className="result-panel vote-prompt">
-            <span className="result-kicker">YOUR FIRST IMPRESSION</span>
-            <p>どちらかを選ぶと、みんなの結果が見られます。</p>
-          </div>
-        )}
-
-        {displayStatus === "ready" && displayResults && displayHasVoted && (
+        {displayStatus === "ready" && isResultsView && displayResults && displayHasVoted && (
           <div className="result-panel" aria-live="polite">
             <div className="result-heading">
               <div>
@@ -230,7 +245,7 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
           </div>
         )}
 
-        {displayStatus === "ready" && displayHasVoted && (
+        {displayStatus === "ready" && isResultsView && displayHasVoted && (
           <section className="survey-panel" aria-labelledby="survey-title">
             {displaySurveySubmitted ? (
               <div className="survey-thanks" role="status">
@@ -286,7 +301,7 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
           </section>
         )}
 
-        <p className="privacy-note"><span aria-hidden="true">◎</span> 投票は匿名です。同じ端末からの投票は一回まで。</p>
+        {!isResultsView && <p className="privacy-note"><span aria-hidden="true">◎</span> 投票は匿名です。同じ端末からの投票は一回まで。</p>}
       </div>
     </section>
   );

@@ -1,29 +1,29 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { VoteExperience } from "../../components/vote-experience";
+import { notFound } from "next/navigation";
+import { VoteExperience } from "../../../components/vote-experience";
 
-type VotePageProps = {
+type ResultsPageProps = {
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 const isValidSlug = (slug: string) => /^[a-z0-9-]{1,64}$/.test(slug);
 
-export async function generateMetadata({ params }: VotePageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ResultsPageProps): Promise<Metadata> {
   const { slug } = await params;
   return {
-    title: isValidSlug(slug) ? "この人の顔、どう？ — FACE CHECK" : "FACE CHECK",
-    description: "良いか、悪いか。あなたの一票をどうぞ。",
+    title: isValidSlug(slug) ? "みんなの結果 — FACE CHECK" : "FACE CHECK",
+    description: "投票結果とアンケートをご覧いただけます。",
   };
 }
 
 export const dynamic = "force-dynamic";
 
-export default async function VotePage({ params, searchParams }: VotePageProps) {
+export default async function ResultsPage({ params, searchParams }: ResultsPageProps) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
   if (!isValidSlug(slug)) notFound();
-  if (query.debug === "results") redirect(`/vote/${slug}/results?debug=results`);
+  const debugResults = query.debug === "results";
 
   return (
     <main className="vote-page">
@@ -32,9 +32,9 @@ export default async function VotePage({ params, searchParams }: VotePageProps) 
           <span className="wordmark-mark">FC</span>
           <span>FACE CHECK</span>
         </Link>
-        <span className="vote-header-tag">ONE PERSON / ONE VOTE</span>
+        <span className="vote-header-tag">RESULTS / COMMUNITY</span>
       </header>
-      <VoteExperience targetSlug={slug} view="vote" />
+      <VoteExperience targetSlug={slug} view="results" debugResults={debugResults} />
       <footer className="vote-footer">
         <span>FACE CHECK / STREET EDITION</span>
       </footer>
