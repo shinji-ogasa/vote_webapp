@@ -5,6 +5,7 @@ import { VoteExperience } from "../../components/vote-experience";
 
 type VotePageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 const isValidSlug = (slug: string) => /^[a-z0-9-]{1,64}$/.test(slug);
@@ -19,9 +20,10 @@ export async function generateMetadata({ params }: VotePageProps): Promise<Metad
 
 export const dynamic = "force-dynamic";
 
-export default async function VotePage({ params }: VotePageProps) {
-  const { slug } = await params;
+export default async function VotePage({ params, searchParams }: VotePageProps) {
+  const [{ slug }, query] = await Promise.all([params, searchParams]);
   if (!isValidSlug(slug)) notFound();
+  const debugResults = query.debug === "results";
 
   return (
     <main className="vote-page">
@@ -32,10 +34,9 @@ export default async function VotePage({ params }: VotePageProps) {
         </Link>
         <span className="vote-header-tag">ONE PERSON / ONE VOTE</span>
       </header>
-      <VoteExperience targetSlug={slug} />
+      <VoteExperience targetSlug={slug} debugResults={debugResults} />
       <footer className="vote-footer">
         <span>FACE CHECK / STREET EDITION</span>
-        <Link href="/">自分のQRをつくる ↗</Link>
       </footer>
     </main>
   );

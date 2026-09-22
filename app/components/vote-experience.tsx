@@ -17,6 +17,17 @@ type VoteResults = {
 
 type VoteExperienceProps = {
   targetSlug: string;
+  debugResults?: boolean;
+};
+
+const DEBUG_RESULTS: VoteResults = {
+  good: 146,
+  bad: 68,
+  total: 214,
+  goodPercent: 68,
+  badPercent: 32,
+  hasVoted: true,
+  surveySubmitted: false,
 };
 
 const AGE_RANGES = [
@@ -37,7 +48,7 @@ const GENDERS = [
   ["prefer_not_to_say", "回答しない"],
 ] as const;
 
-export function VoteExperience({ targetSlug }: VoteExperienceProps) {
+export function VoteExperience({ targetSlug, debugResults = false }: VoteExperienceProps) {
   const [results, setResults] = useState<VoteResults | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [isVoting, setIsVoting] = useState(false);
@@ -70,14 +81,15 @@ export function VoteExperience({ targetSlug }: VoteExperienceProps) {
   }, [targetSlug]);
 
   useEffect(() => {
+    if (debugResults) return;
     const timer = window.setTimeout(() => {
       void loadResults();
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [loadResults]);
+  }, [debugResults, loadResults]);
 
   async function submitVote(choice: VoteChoice) {
-    if (status !== "ready" || isVoting || hasVoted) return;
+    if (debugResults || status !== "ready" || isVoting || hasVoted) return;
     setIsVoting(true);
     setNotice("");
     try {
@@ -101,7 +113,7 @@ export function VoteExperience({ targetSlug }: VoteExperienceProps) {
 
   async function submitSurvey(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmittingSurvey || surveySubmitted) return;
+    if (debugResults || isSubmittingSurvey || surveySubmitted) return;
     setIsSubmittingSurvey(true);
     setSurveyMessage("");
     try {
@@ -126,7 +138,14 @@ export function VoteExperience({ targetSlug }: VoteExperienceProps) {
     }
   }
 
-  const isVoteDisabled = status !== "ready" || isVoting || hasVoted;
+  const displayStatus = debugResults ? "ready" : status;
+  const displayResults = debugResults ? DEBUG_RESULTS : results;
+  const displayHasVoted = debugResults || hasVoted;
+  const displaySurveySubmitted = !debugResults && surveySubmitted;
+  const displayNotice = debugResults
+    ? "デバッグ用のサンプル表示です。投票・アンケートは送信されません。"
+    : notice;
+  const isVoteDisabled = debugResults || status !== "ready" || isVoting || hasVoted;
 
   return (
     <section className="vote-shell content-width">
@@ -171,49 +190,49 @@ export function VoteExperience({ targetSlug }: VoteExperienceProps) {
           </button>
         </div>
 
-        {status === "loading" && (
+        {displayStatus === "loading" && (
           <div className="result-panel result-loading" role="status">投票ページを準備中…</div>
         )}
 
-        {status === "error" && (
+        {displayStatus === "error" && (
           <div className="result-panel result-error" role="alert">
             <strong>まだ投票を受け付けられません。</strong>
-            <span>{notice}</span>
+            <span>{displayNotice}</span>
             <button className="small-button small-button-dark" type="button" onClick={() => void loadResults()}>もう一度読み込む</button>
           </div>
         )}
 
-        {status === "ready" && results && !hasVoted && (
+        {displayStatus === "ready" && displayResults && !displayHasVoted && (
           <div className="result-panel vote-prompt">
             <span className="result-kicker">YOUR FIRST IMPRESSION</span>
             <p>どちらかを選ぶと、みんなの結果が見られます。</p>
           </div>
         )}
 
-        {status === "ready" && results && hasVoted && (
+        {displayStatus === "ready" && displayResults && displayHasVoted && (
           <div className="result-panel" aria-live="polite">
             <div className="result-heading">
               <div>
                 <span className="result-kicker">CURRENT SCORE</span>
-                <h2>{results.total === 0 ? "最初の一票をどうぞ" : "みんなの判定"}</h2>
+                <h2>{displayResults.total === 0 ? "最初の一票をどうぞ" : "みんなの判定"}</h2>
               </div>
-              <strong className="vote-count">{results.total}<small>票</small></strong>
+              <strong className="vote-count">{displayResults.total}<small>票</small></strong>
             </div>
             <div className="score-row">
-              <div className="score-label"><span className="score-dot score-dot-good" />良い <strong>{results.goodPercent}%</strong></div>
-              <div className="score-track"><span className="score-fill score-fill-good" style={{ width: `${results.goodPercent}%` }} /></div>
+              <div className="score-label"><span className="score-dot score-dot-good" />良い <strong>{displayResults.goodPercent}%</strong></div>
+              <div className="score-track"><span className="score-fill score-fill-good" style={{ width: `${displayResults.goodPercent}%` }} /></div>
             </div>
             <div className="score-row">
-              <div className="score-label"><span className="score-dot score-dot-bad" />悪いかも <strong>{results.badPercent}%</strong></div>
-              <div className="score-track"><span className="score-fill score-fill-bad" style={{ width: `${results.badPercent}%` }} /></div>
+              <div className="score-label"><span className="score-dot score-dot-bad" />悪いかも <strong>{displayResults.badPercent}%</strong></div>
+              <div className="score-track"><span className="score-fill score-fill-bad" style={{ width: `${displayResults.badPercent}%` }} /></div>
             </div>
-            <p className="notice" role="status">{notice}</p>
+            <p className="notice" role="status">{displayNotice}</p>
           </div>
         )}
 
-        {status === "ready" && hasVoted && (
+        {displayStatus === "ready" && displayHasVoted && (
           <section className="survey-panel" aria-labelledby="survey-title">
-            {surveySubmitted ? (
+            {displaySurveySubmitted ? (
               <div className="survey-thanks" role="status">
                 <span className="survey-step">OPTIONAL SURVEY / DONE</span>
                 <h2 id="survey-title">回答ありがとう！</h2>
@@ -255,9 +274,9 @@ export function VoteExperience({ targetSlug }: VoteExperienceProps) {
                   </label>
                   <p className="survey-privacy">回答は匿名で保存され、公開されるのは投票の割合だけです。</p>
                   <div className="survey-submit-row">
-                    <button className="small-button small-button-dark" type="submit" disabled={isSubmittingSurvey}>
-                      {isSubmittingSurvey ? "送信中…" : "アンケートを送信"}
-                      {!isSubmittingSurvey && <span aria-hidden="true"> ↗</span>}
+                    <button className="small-button small-button-dark" type="submit" disabled={debugResults || isSubmittingSurvey}>
+                      {isSubmittingSurvey ? "送信中…" : debugResults ? "デバッグ表示中" : "アンケートを送信"}
+                      {!isSubmittingSurvey && !debugResults && <span aria-hidden="true"> ↗</span>}
                     </button>
                     <span className="survey-message" role="status">{surveyMessage}</span>
                   </div>
