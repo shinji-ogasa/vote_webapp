@@ -19,6 +19,8 @@ npm run dev
 3. Project URLを `SUPABASE_URL`、service role keyを `SUPABASE_SERVICE_ROLE_KEY` に設定します。
 4. `http://localhost:3000/` のQRを保存し、服やカードに印刷します。投票ページは `/vote/me`、投票後の結果とアンケートは `/vote/me/results` です。画面確認用の結果デバッグページは `/vote/me/results?debug=results` です。
 
+アンケートコメントは `/admin` から確認できます。管理者パスワードは32文字以上にし、`FACE_CHECK_ADMIN_PASSWORD` として Vercel の Production 環境変数に登録してください。コメント取得 API は管理者ログイン後のみ利用でき、セッション Cookie は12時間で期限切れになります。
+
 投票テーブルにはRLSを有効にし、匿名クライアントからの直接アクセスを閉じています。Next.jsのAPI Routeだけが集計と保存を行います。同じ端末にはHttpOnly Cookieを発行し、同じ対象への二重投票を防ぎます。投票後は別ページに移動し、結果とアンケートを表示します。アンケートは年齢層・性別の選択式と任意コメント（280文字まで）で、回答は票にひも付けて匿名で保存します。画面に公開するのは投票割合だけです。
 
 ## Vercelへのデプロイ
