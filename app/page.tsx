@@ -27,10 +27,7 @@ export default function HomePage() {
             <span className="eyebrow-line" />
             QRでひらく、通りすがりの一票
           </p>
-          <h1>
-            今日の顔面、
-            <span className="accent-word">どう？</span>
-          </h1>
+          <h1>今日の顔面、<span className="accent-word">どう？</span></h1>
           <p className="hero-description">
             服のQRコードを読み込んだ人が、あなたの顔に一票。結果は投票したあとに、その場でパーセント表示されます。
           </p>
@@ -89,7 +86,7 @@ export default function HomePage() {
       <section className="how-section content-width" id="how-it-works">
         <div className="section-heading">
           <p className="eyebrow"><span className="eyebrow-line" /> 3 STEPS</p>
-          <h2>服に貼ったら、<br /><em>あとは待つだけ。</em></h2>
+          <h2>服に貼ったら、<em>あとは待つだけ。</em></h2>
         </div>
         <div className="step-grid">
           {steps.map(([number, title, description]) => (
@@ -105,7 +102,7 @@ export default function HomePage() {
       <section className="share-section content-width">
         <div className="share-copy">
           <p className="eyebrow"><span className="eyebrow-line" /> READY TO WEAR</p>
-          <h2>まずは自分のQRを<br /><em>つくってみる。</em></h2>
+          <h2>まずは自分の<span className="keep-together">QRを</span><em>つくってみる。</em></h2>
           <p>下のQRを保存して、そのまま服・ステッカー・名刺に使えます。投票URLはあとから変わりません。</p>
         </div>
         <QrCard />

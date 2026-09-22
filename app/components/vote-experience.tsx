@@ -151,7 +151,7 @@ export function VoteExperience({ targetSlug, debugResults = false }: VoteExperie
     <section className="vote-shell content-width">
       <div className="vote-intro">
         <p className="eyebrow"><span className="eyebrow-line" /> QUICK OPINION / 001</p>
-        <h1>この人の顔、<br /><em>どう思う？</em></h1>
+        <h1>この人の顔、<em>どう思う？</em></h1>
         <p className="vote-subtitle">直感でひとつ。理由はいりません。</p>
       </div>
 
