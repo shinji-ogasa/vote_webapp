@@ -223,11 +223,36 @@ p { text-wrap: pretty; }
 .admin-comment-meta time { margin-left: auto; }
 .admin-comment > p { margin: 14px 0 0; color: var(--ink); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; white-space: pre-wrap; }
 .admin-message { margin: 0 !important; color: #b23b2c !important; }
+.admin-vote-summary { margin-top: 18px; padding: 18px; border: 1px solid var(--line); background: #faf7f1; }
+.admin-vote-summary-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.admin-vote-summary-kicker { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .16em; }
+.admin-vote-summary-heading h2 { margin: 6px 0 0; font-size: 18px; letter-spacing: -.05em; }
+.admin-vote-total { display: flex; align-items: baseline; gap: 4px; margin: 0; color: var(--muted); font-size: 10px; }
+.admin-vote-total strong { color: var(--ink); font-size: 29px; letter-spacing: -.07em; }
+.admin-vote-bar { display: flex; height: 10px; margin: 17px 0 14px; overflow: hidden; border-radius: 999px; background: #e4ddd4; }
+.admin-vote-bar-good, .admin-vote-bar-bad { display: block; height: 100%; }
+.admin-vote-bar-good { background: var(--blue); }
+.admin-vote-bar-bad { background: var(--coral); }
+.admin-vote-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.admin-vote-stat { display: flex; min-width: 0; align-items: center; gap: 7px; }
+.admin-vote-dot { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; }
+.admin-vote-dot-good { background: var(--blue); }
+.admin-vote-dot-bad { background: var(--coral); }
+.admin-vote-stat-label { font-size: 11px; }
+.admin-vote-stat strong { margin-left: auto; font-size: 18px; letter-spacing: -.04em; }
+.admin-vote-stat small { color: var(--muted); font-size: 10px; white-space: nowrap; }
 
 @media (max-width: 920px) {
   .admin-shell { display: block; padding-top: 60px; padding-bottom: 60px; }
   .admin-intro > p:last-child { max-width: 500px; }
   .admin-card { margin-top: 36px; }
+}
+
+@media (max-width: 420px) {
+  .admin-vote-summary { padding: 14px; }
+  .admin-vote-stats { gap: 8px; }
+  .admin-vote-stat { gap: 5px; }
+  .admin-vote-stat small { font-size: 9px; }
 }
 
 .home-page {

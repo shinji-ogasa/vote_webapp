@@ -11,8 +11,17 @@ type AdminComment = {
   comment: string | null;
 };
 
+type VoteStats = {
+  total: number;
+  good: number;
+  bad: number;
+  goodPercent: number;
+  badPercent: number;
+};
+
 type CommentsResponse = {
   comments?: AdminComment[];
+  voteStats?: VoteStats;
   error?: string;
 };
 
@@ -51,6 +60,7 @@ function formatDate(value: string) {
 export function AdminComments() {
   const [status, setStatus] = useState<AdminStatus>("checking");
   const [comments, setComments] = useState<AdminComment[]>([]);
+  const [voteStats, setVoteStats] = useState<VoteStats | null>(null);
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isWorking, setIsWorking] = useState(false);
@@ -71,6 +81,7 @@ export function AdminComments() {
       }
       if (!response.ok) throw new Error(data.error ?? "コメントを読み込めませんでした。");
       setComments(data.comments ?? []);
+      setVoteStats(data.voteStats ?? null);
       setStatus("ready");
     } catch {
       setMessage("コメントを読み込めませんでした。時間をおいて再読み込みしてください。");
@@ -119,6 +130,7 @@ export function AdminComments() {
       const response = await fetch("/api/admin/session", { method: "DELETE" });
       if (!response.ok) throw new Error("LOGOUT_FAILED");
       setComments([]);
+      setVoteStats(null);
       setMessage("");
       setPassword("");
       setStatus("login");
@@ -196,6 +208,39 @@ export function AdminComments() {
               </div>
             </div>
             {message && <p className="admin-message" role="alert">{message}</p>}
+            {voteStats && (
+              <section className="admin-vote-summary" aria-labelledby="admin-vote-summary-title">
+                <div className="admin-vote-summary-heading">
+                  <div>
+                    <span className="admin-vote-summary-kicker">OVERALL VOTES</span>
+                    <h2 id="admin-vote-summary-title">投票結果</h2>
+                  </div>
+                  <p className="admin-vote-total"><strong>{voteStats.total}</strong><span>票</span></p>
+                </div>
+                <div
+                  className="admin-vote-bar"
+                  role="img"
+                  aria-label={`良い ${voteStats.goodPercent}%、${voteStats.good}票。悪い ${voteStats.badPercent}%、${voteStats.bad}票。`}
+                >
+                  <span className="admin-vote-bar-good" style={{ width: `${voteStats.goodPercent}%` }} />
+                  <span className="admin-vote-bar-bad" style={{ width: `${voteStats.badPercent}%` }} />
+                </div>
+                <div className="admin-vote-stats">
+                  <div className="admin-vote-stat">
+                    <span className="admin-vote-dot admin-vote-dot-good" aria-hidden="true" />
+                    <span className="admin-vote-stat-label">良い</span>
+                    <strong>{voteStats.goodPercent}%</strong>
+                    <small>{voteStats.good}票</small>
+                  </div>
+                  <div className="admin-vote-stat">
+                    <span className="admin-vote-dot admin-vote-dot-bad" aria-hidden="true" />
+                    <span className="admin-vote-stat-label">悪い</span>
+                    <strong>{voteStats.badPercent}%</strong>
+                    <small>{voteStats.bad}票</small>
+                  </div>
+                </div>
+              </section>
+            )}
             {comments.length === 0 ? (
               <div className="admin-empty">まだコメントはありません。</div>
             ) : (
